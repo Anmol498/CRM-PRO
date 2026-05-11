@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../../api/client';
 import dayjs from 'dayjs';
-import { Plane, Calendar, CreditCard, Plus, ArrowLeft, ArrowLeftRight, User, Phone, Mail, MessageSquare, Clock, Edit2, UserPlus, Building2, UserCircle, CheckCircle2, ShieldCheck, Check, Layers, Maximize2, X, ChevronDown } from 'lucide-react';
+import { Plane, Calendar, CreditCard, Plus, ArrowLeft, ArrowLeftRight, User, Phone, Mail, MapPin, MessageSquare, Clock, Edit2, UserPlus, Building2, UserCircle, List, CheckCircle2, ShieldCheck, Check, Layers, Maximize2, X, ChevronDown } from 'lucide-react';
 import { AddPaymentModal } from '../../../features/bookings/components/AddPaymentModal';
 import { EditModal } from '../../../features/bookings/components/EditModal';
 import { useAuth } from '../../../context/AuthContext';
@@ -518,14 +518,15 @@ export const BookingDetails: React.FC = () => {
                                     <div className="space-y-5">
                                         {(() => {
                                             const traveler = booking.travelers[0];
-                                            const primarySegment = booking.segments?.[0];
                                             const primary = {
                                                 ...traveler,
-                                                tripType: primarySegment?.tripType || booking.tripType || 'one-way',
-                                                from: primarySegment?.from || booking.flightFrom || '',
-                                                to: primarySegment?.to || booking.flightTo || '',
-                                                country: primarySegment?.country || booking.destination || '',
+                                                tripType: traveler.tripType || booking.tripType || 'one-way',
+                                                flightFrom: traveler.flightFrom || booking.flightFrom || '',
+                                                flightTo: traveler.flightTo || booking.flightTo || '',
                                             };
+                                            const hasFlightInfo = primary.flightFrom || primary.flightTo;
+                                            const hasTripInfo = primary.tripType || primary.country;
+
                                             if (!booking.includesFlight && !booking.includesAdditionalServices) return null;
 
                                             if (!booking.includesFlight && !booking.includesAdditionalServices) return null;

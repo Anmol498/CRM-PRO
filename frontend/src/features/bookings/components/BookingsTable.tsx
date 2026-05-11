@@ -245,14 +245,14 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
             header: 'Contact Number',
         }),
         columnHelper.accessor((row) => {
-            const flightDestination = row.segments?.[0]?.to;
+            const flightDestination = row.travelers?.[0]?.flightTo;
             return flightDestination || row.destinationCity || '-';
         }, {
             id: 'destination',
             header: 'Destination',
         }),
         columnHelper.accessor((row) => {
-            const flightDate = row.segments?.[0]?.departureDate;
+            const flightDate = row.travelers?.[0]?.departureTime;
             const date = flightDate || row.travelDate;
             return date;
         }, {
@@ -450,7 +450,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                         <div className="md:hidden flex flex-col gap-4">
                             {table.getRowModel().rows.map((row) => {
                                 const booking = row.original;
-                                const flightDate = booking.segments?.[0]?.departureDate;
+                                const flightDate = booking.travelers?.[0]?.departureTime;
                                 const tDate = flightDate || booking.travelDate;
                                 const isBooked = booking.status === 'Booked';
 
@@ -510,7 +510,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                                                 </div>
                                                 <div className="flex flex-col gap-1">
                                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Destination</span>
-                                                    <span className="text-[13px] font-semibold text-slate-700 line-clamp-1" title={booking.segments?.[0]?.to || booking.destinationCity || '-'}>{booking.segments?.[0]?.to || booking.destinationCity || '-'}</span>
+                                                    <span className="text-[13px] font-semibold text-slate-700 line-clamp-1" title={booking.travelers?.[0]?.flightTo || booking.destinationCity || '-'}>{booking.travelers?.[0]?.flightTo || booking.destinationCity || '-'}</span>
                                                 </div>
                                             </div>
                                         </div>
