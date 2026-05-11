@@ -1,0 +1,531 @@
+﻿CRM Database Refactor – Discovery Questions & Migration Checklist
+Purpose
+This document contains all required questions, validations, risks, and migration checks before removing or restructuring fields in CRM 3.0 database collections.
+Goal:
+* Remove unused/redundant fields
+* Avoid breaking CRM 1.0 legacy data
+* Prevent frontend/backend runtime errors
+* Prevent reporting/payment/traveler/history issues
+* Ensure backward compatibility during deployment
+________________
+
+
+Current Proposed Changes
+________________
+
+
+PASSENGERS Collection
+Proposed Removal
+arrivalTime
+returnArrivalTime
+returnDate
+__v
+
+
+Proposed Move / Duplication Removal
+These already exist in booking collection:
+departureTime
+returnDepartureTime
+country
+flightFrom
+flightTo
+
+
+Question:
+Should passenger collection become ONLY traveler-specific data?
+Example:
+name
+phone
+dob
+passport
+gender
+mealPreference
+seatPreference
+bookingId
+
+
+And ALL trip/flight details live inside booking?
+________________
+
+
+PRIMARYCONTACTS Collection
+Proposed Removal
+contactEmail
+__v
+
+
+Questions:
+* Is email ever used for:
+   * notifications?
+   * OTP?
+   * marketing?
+   * invoice sending?
+   * exports?
+   * customer communication history?
+* Is there ANY old CRM 1.0 module still reading contactEmail?
+* Should email instead live only in:
+   * booking.contact.email
+   * passenger.email
+   * or separate communications collection?
+________________
+
+
+BOOKINGS Collection
+Proposed Removal
+Inside contact object:
+email
+
+
+Top-level fields:
+travelDate
+returnDate
+flightFrom
+flightTo
+tripType
+amount
+includesFlight
+includesAdditionalServices
+pricePerTicket
+
+
+Proposed Replacement
+Move trip-related fields into:
+segments: []
+
+
+Example:
+segments: [
+  {
+    from: "DXB",
+    to: "BHJ",
+    departureDate: ISODate(),
+    returnDate: ISODate(),
+    type: "round-trip"
+  }
+]
+
+
+________________
+
+
+IMPORTANT QUESTIONS BEFORE CHANGING BOOKINGS
+________________
+
+
+1. Is Existing UI Already Using segments[] Everywhere?
+Questions:
+* Are ALL booking pages already migrated to segments[]?
+* Is any screen still reading:
+   * travelDate
+   * returnDate
+   * flightFrom
+   * flightTo
+   * tripType
+Check:
+* lead details page
+* reports page
+* edit booking page
+* booking card UI
+* calendar
+* exports
+* PDF generation
+* ticketing
+* operations dashboard
+* WhatsApp templates
+* admin analytics
+________________
+
+
+2. Are APIs Backward Compatible?
+Questions:
+* Do APIs still return old fields?
+* Does frontend expect old fields?
+* Does any mobile/webhook integration expect old schema?
+Need to verify:
+* GET booking
+* CREATE booking
+* UPDATE booking
+* CONVERT lead to booking
+* duplicate booking flow
+* export APIs
+* report APIs
+________________
+
+
+3. Will Old CRM 1.0 Data Break?
+Questions:
+* Do old records contain ONLY old fields and no segments?
+* What happens when frontend opens old booking?
+Need fallback logic:
+if (!segments?.length) {
+   use legacy fields
+}
+
+
+Question:
+Will migration script convert ALL old records?
+Or:
+Will system support both schemas temporarily?
+________________
+
+
+4. Can Reports Break?
+Questions:
+* Are reports aggregating:
+   * amount
+   * pricePerTicket
+   * tripType
+   * travelDate
+from booking collection directly?
+Need to inspect:
+* dashboard stats
+* monthly sales
+* revenue reports
+* ticket reports
+* travel calendar
+* finance exports
+________________
+
+
+5. Is amount Truly Redundant?
+Current understanding:
+estimatedCost.totalEstimatedAmount
+
+
+already stores amount.
+Questions:
+* Is amount used anywhere for:
+   * quick filters?
+   * sorting?
+   * dashboard totals?
+   * commissions?
+   * old reports?
+If removed:
+* what becomes source of truth?
+* estimated total?
+* actual total?
+* payment total?
+________________
+
+
+6. Is pricePerTicket Used Anywhere?
+Questions:
+* Does any:
+   * markup calculation
+   * vendor costing
+   * invoice logic
+   * ticketing flow
+   * Excel export
+still use it?
+________________
+
+
+7. Should includesFlight Be Derived Instead?
+Possible replacement:
+segments.length > 0
+
+
+Question:
+Do we still need explicit boolean fields?
+________________
+
+
+8. Should includesAdditionalServices Be Removed?
+You mentioned:
+additionalServicesDetails
+
+
+already exists.
+Questions:
+* Is empty array enough?
+* Any old logic checking boolean only?
+* Does UI rely on fast boolean checks?
+Potential replacement:
+additionalServicesDetails.length > 0
+
+
+________________
+
+
+PAYMENT STRUCTURE QUESTIONS
+________________
+
+
+Current Concern
+Outstanding amount:
+booking.outstanding
+
+
+Payments stored separately:
+payments[]
+
+
+Questions:
+* Is outstanding calculated dynamically?
+* Or manually updated?
+Risk:
+Stored outstanding can become inconsistent.
+Recommended approach:
+outstanding =
+totalAmount - totalPayments
+
+
+Question:
+Do you want computed values or stored values?
+________________
+
+
+PASSENGER NORMALIZATION QUESTIONS
+________________
+
+
+Current Problem
+Passenger collection duplicates booking trip data.
+Questions:
+* Should passengers support:
+   * multi-city trips?
+   * individual return dates?
+   * different sectors per traveler?
+If NO:
+remove duplicated flight fields.
+If YES:
+passenger-level flight fields may still be needed.
+________________
+
+
+SEGMENTS STRUCTURE QUESTIONS
+________________
+
+
+Proposed Structure
+Need final standardized schema.
+Questions:
+Single Segment?
+{
+  from,
+  to,
+  departureDate
+}
+
+
+Round Trip?
+{
+  outbound: {},
+  inbound: {}
+}
+
+
+Multi-city?
+segments: []
+
+
+Need final decision BEFORE migration.
+________________
+
+
+MIGRATION STRATEGY QUESTIONS
+________________
+
+
+1. Big Bang Migration or Gradual?
+Options:
+Option A – Safe Gradual Migration (Recommended)
+Phase 1:
+* Add new schema
+* Keep old fields
+* Dual write
+Phase 2:
+* Migrate old data
+Phase 3:
+* Switch frontend fully
+Phase 4:
+* Remove old fields
+Option B – Immediate Cleanup
+Higher risk:
+* runtime crashes
+* missing data
+* reporting failures
+Question:
+Which approach will be used?
+________________
+
+
+2. Do We Need Migration Scripts?
+Need scripts for:
+bookings
+passengers
+primarycontacts
+payments
+
+
+Questions:
+* Will migration run once?
+* Or repeatedly during deployment?
+* Need rollback support?
+________________
+
+
+3. How Will Validation Be Done?
+Need checks:
+count before migration
+count after migration
+missing segments
+missing totals
+broken references
+
+
+Questions:
+* Who validates migrated data?
+* Need dry-run mode?
+________________
+
+
+INDEX & PERFORMANCE QUESTIONS
+________________
+
+
+If Fields Removed
+Need to inspect indexes.
+Questions:
+* Are indexes using removed fields?
+* Are reports querying old fields?
+* Will compound indexes break?
+Need to inspect:
+travelDate
+tripType
+flightFrom
+flightTo
+amount
+
+
+________________
+
+
+FRONTEND QUESTIONS
+________________
+
+
+Forms
+Questions:
+* Does create booking form still submit legacy fields?
+* Does edit booking patch old fields?
+* Are default values dependent on removed fields?
+________________
+
+
+UI Rendering
+Questions:
+* Any component directly reading:
+   * booking.flightFrom
+   * passenger.flightTo
+   * booking.travelDate
+Need full grep/search before removal.
+________________
+
+
+BACKEND QUESTIONS
+________________
+
+
+Validation Schemas
+Need to inspect:
+* Mongoose schemas
+* Zod/Joi validators
+* TypeScript interfaces
+* DTOs
+Questions:
+* Are removed fields marked required anywhere?
+* Will old requests fail validation?
+________________
+
+
+DEPLOYMENT QUESTIONS
+________________
+
+
+Deployment Order
+Critical question:
+What deploy order will be used?
+Recommended:
+1. Backend supports BOTH schemas
+2. Frontend updated
+3. Migration runs
+4. Cleanup old fields later
+NOT:
+remove fields first
+
+
+because old frontend may crash.
+________________
+
+
+RECOMMENDED SAFE APPROACH
+________________
+
+
+Recommended Architecture
+BOOKINGS
+Store:
+* segments
+* totals
+* status
+* payments summary
+PASSENGERS
+Store ONLY:
+* traveler-specific data
+PRIMARYCONTACTS
+Store ONLY:
+* lead/contact data
+PAYMENTS
+Single source of truth for transactions.
+Derived:
+* outstanding
+* paidAmount
+________________
+
+
+FINAL QUESTIONS CODING AGENT MUST ANSWER BEFORE CHANGES
+________________
+
+
+Mandatory Checklist
+Data
+* How many legacy CRM 1.0 records exist?
+* How many records already use segments?
+* Any null/invalid old fields?
+Backend
+* Any APIs still dependent on removed fields?
+* Any validators using removed fields?
+* Any aggregation pipelines using removed fields?
+Frontend
+* Any UI still reading removed fields?
+* Any forms still sending removed fields?
+Reporting
+* Any reports/export/PDFs using old fields?
+Migration
+* Is migration reversible?
+* Is backup created?
+* Is dry-run supported?
+* Is rollback plan defined?
+Deployment
+* Is backend backward compatible?
+* Will old frontend still work during deployment?
+Performance
+* Any indexes affected?
+* Any queries becoming slower?
+________________
+
+
+Recommended Immediate Next Step
+Before deleting anything:
+1. Create compatibility layer
+2. Introduce segments[]
+3. Dual-write old + new schema temporarily
+4. Run migration
+5. Verify reports/UI/APIs
+6. Remove old fields only after validation
+This is especially important because:
+* CRM 1.0 legacy data exists
+* CRM 3.0 is already live and working
+* Empty fields are safer than premature deletions
+* Runtime breakage risk is high in booking/payment systems

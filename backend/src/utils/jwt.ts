@@ -1,0 +1,28 @@
+import jwt from 'jsonwebtoken';
+import { IUser } from '../models/User.model';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev';
+
+export type JwtPayload = {
+    id: string;
+    role: string;
+    name: string;
+    email: string;
+    groups: string[];
+};
+
+export const generateToken = (user: IUser): string => {
+    return jwt.sign(
+        { id: user._id, role: user.role, name: user.name, email: user.email, groups: user.groups },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+    );
+};
+
+export const verifyToken = (token: string): JwtPayload => {
+    return jwt.verify(token, JWT_SECRET) as JwtPayload;
+};
+
+
+
+

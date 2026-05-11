@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, CRM-2.0 ]
+  pull_request:
+    branches: [ main, master, CRM-2.0 ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies (Root)
+      run: npm install
+
+    - name: Install and Build Shared
+      run: |
+        cd shared
+        npm install
+        npm run build
+
+    - name: Install and Build Backend
+      run: |
+        cd backend
+        npm install
+        npm run build
+
+    - name: Install and Build Frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
