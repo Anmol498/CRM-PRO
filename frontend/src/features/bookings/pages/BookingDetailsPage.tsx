@@ -518,13 +518,15 @@ export const BookingDetails: React.FC = () => {
                                     <div className="space-y-5">
                                         {(() => {
                                             const traveler = booking.travelers[0];
+                                            const primarySegment = booking.segments?.[0];
                                             const primary = {
                                                 ...traveler,
-                                                tripType: traveler.tripType || booking.tripType || 'one-way',
-                                                flightFrom: traveler.flightFrom || booking.flightFrom || '',
-                                                flightTo: traveler.flightTo || booking.flightTo || '',
+                                                tripType: primarySegment?.tripType || booking.tripType || 'one-way',
+                                                from: primarySegment?.from || booking.flightFrom || '',
+                                                to: primarySegment?.to || booking.flightTo || '',
+                                                country: primarySegment?.country || booking.destination || '',
                                             };
-                                            const hasFlightInfo = primary.flightFrom || primary.flightTo;
+                                            const hasFlightInfo = primary.from || primary.to;
                                             const hasTripInfo = primary.tripType || primary.country;
 
                                             if (!booking.includesFlight && !booking.includesAdditionalServices) return null;

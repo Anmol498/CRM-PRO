@@ -5,6 +5,7 @@ import api, { lastApiCallTime } from '../api/client';
 
 interface AuthContextType {
     user: User | null;
+    token: string | null;
     login: (userData: any) => void;
     logout: () => void;
     isAuthenticated: boolean;
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
+    const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [isLoading, setIsLoading] = useState(true);
     const queryClient = useQueryClient();
 
@@ -24,8 +26,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             try {
                 const { data } = await api.get('/auth/me');
                 setUser(data);
+                // The /auth/me call doesn't return a new token in this implementation, 
+                // so we rely on the one already in state/localStorage.
+                // If it fails, we clear everything in the catch block.
             } catch (error) {
                 setUser(null);
+                setToken(null);
                 localStorage.removeItem('token'); // Cleanup legacy token
             } finally {
                 setIsLoading(false);
@@ -85,6 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(userData);
         // Token is now set in HTTP-only cookie by backend
         if (userData.token) {
+            setToken(userData.token);
             localStorage.setItem('token', userData.token); // Still keep for non-cookie fallback if needed
         }
     };
@@ -96,6 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error('Logout failed:', error);
         } finally {
             setUser(null);
+            setToken(null);
             localStorage.removeItem('token');
             queryClient.clear();
             window.location.href = '/login';
@@ -103,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, isLoading }}>
+        <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user, isLoading }}>
             {!isLoading && children}
         </AuthContext.Provider>
     );

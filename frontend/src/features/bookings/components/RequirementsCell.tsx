@@ -20,14 +20,14 @@ export const RequirementsCell: React.FC<RequirementsCellProps> = ({ booking }) =
         namesList = name + (extraCount > 0 ? ` +${extraCount}` : '');
     }
 
-    const flightInfo = travelers?.find(t => t.flightFrom || t.flightTo);
+    const flightInfo = booking.segments?.[0];
     
     let tooltip = '';
     if (flightInfo) {
-        tooltip = `FLIGHT: ${flightInfo.flightFrom || 'TBD'} ⟶ ${flightInfo.flightTo || 'TBD'}${flightInfo.departureTime ? ' (' + dayjs(flightInfo.departureTime).format('MMM DD') + ')' : ''}`;
+        tooltip = `FLIGHT: ${flightInfo.from || 'TBD'} ⟶ ${flightInfo.to || 'TBD'}${flightInfo.departureDate ? ' (' + dayjs(flightInfo.departureDate).format('MMM DD') + ')' : ''}`;
         
         if (flightInfo.tripType === 'round-trip') {
-            tooltip += ` | RETURN: ${flightInfo.flightTo || 'TBD'} ⟶ ${flightInfo.flightFrom || 'TBD'}${flightInfo.returnDate || flightInfo.returnDepartureTime ? ' (' + dayjs(flightInfo.returnDate || flightInfo.returnDepartureTime).format('MMM DD') + ')' : ''}`;
+            tooltip += ` | RETURN: ${flightInfo.to || 'TBD'} ⟶ ${flightInfo.from || 'TBD'}${flightInfo.returnDate || flightInfo.returnDepartureTime ? ' (' + dayjs(flightInfo.returnDate || flightInfo.returnDepartureTime).format('MMM DD') + ')' : ''}`;
         }
     }
 
