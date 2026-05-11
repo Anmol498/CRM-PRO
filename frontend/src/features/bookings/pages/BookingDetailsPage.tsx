@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../../api/client';
 import dayjs from 'dayjs';
-import { Plane, Calendar, CreditCard, Plus, ArrowLeft, ArrowLeftRight, User, Phone, Mail, MapPin, MessageSquare, Clock, Edit2, UserPlus, Building2, UserCircle, List, CheckCircle2, ShieldCheck, Check, Layers, Maximize2, X, ChevronDown } from 'lucide-react';
+import { Plane, Calendar, CreditCard, Plus, ArrowLeft, ArrowLeftRight, User, Phone, Mail, MessageSquare, Clock, Edit2, UserPlus, Building2, UserCircle, CheckCircle2, ShieldCheck, Check, Layers, Maximize2, X, ChevronDown } from 'lucide-react';
 import { AddPaymentModal } from '../../../features/bookings/components/AddPaymentModal';
 import { EditModal } from '../../../features/bookings/components/EditModal';
 import { useAuth } from '../../../context/AuthContext';
@@ -526,9 +526,6 @@ export const BookingDetails: React.FC = () => {
                                                 to: primarySegment?.to || booking.flightTo || '',
                                                 country: primarySegment?.country || booking.destination || '',
                                             };
-                                            const hasFlightInfo = primary.from || primary.to;
-                                            const hasTripInfo = primary.tripType || primary.country;
-
                                             if (!booking.includesFlight && !booking.includesAdditionalServices) return null;
 
                                             if (!booking.includesFlight && !booking.includesAdditionalServices) return null;

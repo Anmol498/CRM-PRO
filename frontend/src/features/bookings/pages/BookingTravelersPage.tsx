@@ -250,8 +250,8 @@ export const BookingTravelers: React.FC = () => {
                         const seg0 = booking.segments?.[0];
 
                         // Triple-layered fallback for dates (traveler -> segment -> top-level)
-                        const departureDate = t.departureTime || seg0?.departureDate || booking.travelDate;
-                        const returnDate = t.returnDepartureTime || seg0?.returnDepartureTime || seg0?.returnDate || booking.returnDate;
+                        const departureDate = (t as any).departureTime || seg0?.departureDate || booking.travelDate;
+                        const returnDate = (t as any).returnDepartureTime || seg0?.returnDepartureTime || seg0?.returnDate || booking.returnDate;
 
                         return {
                             name: t.name || '',
@@ -262,11 +262,11 @@ export const BookingTravelers: React.FC = () => {
                             flightFrom: (seg0?.from || booking.flightFrom || '').toUpperCase(),
                             flightTo: (seg0?.to || booking.flightTo || '').toUpperCase(),
                             departureTime: departureDate ? new Date(departureDate).toISOString().split('T')[0] : '',
-                            arrivalTime: t.arrivalTime || '',
+                            arrivalTime: (t as any).arrivalTime || '',
                             tripType: (seg0?.tripType || booking.tripType || 'one-way') as 'one-way' | 'round-trip' | 'multi-city',
                             returnDate: '',
                             returnDepartureTime: returnDate ? new Date(returnDate).toISOString().split('T')[0] : '',
-                            returnArrivalTime: t.returnArrivalTime || '',
+                            returnArrivalTime: (t as any).returnArrivalTime || '',
                             dob: t.dob || '',
                             anniversary: t.anniversary || '',
                         };
@@ -447,7 +447,6 @@ export const BookingTravelers: React.FC = () => {
             }
 
             // 2. Save Pricing — Build enriched segments and send as primary data
-            const passengerCount = data.travelers.length || 1;
             const primaryTraveler = data.travelers[0];
 
             // Build segments array from form state
