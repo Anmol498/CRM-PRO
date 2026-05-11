@@ -43,6 +43,7 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.2",
     "winston": "^3.19.0",
+    "zod": "^3.24.1",
     "tsup": "^8.5.1"
   },
   "devDependencies": {
