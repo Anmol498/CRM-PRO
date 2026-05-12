@@ -2,13 +2,9 @@ import { defineConfig } from 'tsup';
 
 export default defineConfig({
   entry: ['src/server.ts'],
-  format: ['cjs'],
-  target: 'node20',
   outDir: 'dist',
+  format: ['cjs'],
+  sourcemap: false,
   clean: true,
-  sourcemap: true,
-  minify: false,
-  dts: false,
-  splitting: false,
-  shims: true,
+  noExternal: ['@travel-crm/shared'],
 });
