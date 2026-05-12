@@ -290,6 +290,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                 const status = booking.status;
                 const config = statusConfig[status] || statusConfig['New'];
                 const badge = getGroupBadge(booking.assignedGroup);
+                const isUnassigned = !booking.assignedToUser?.name || booking.assignedToUser.name === 'Unassigned';
                 
                 return (
                     <div className="flex items-center gap-1.5">
@@ -297,7 +298,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                             <span className={`w-1.5 h-1.5 rounded-full ${config.dot} ${status === 'Working' ? 'animate-pulse' : ''}`} />
                             {status}
                         </span>
-                        {!booking.assignedToUser?.name && (
+                        {isUnassigned && (
                             <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-md border shadow-sm ${badge.color} hover:scale-110 transition-transform cursor-help`} title={`Assigned to ${badge.label} Group`}>
                                 {badge.code}
                             </span>
@@ -314,23 +315,24 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                 const badge = getGroupBadge(booking.assignedGroup);
                 const bookingGroup = (booking.assignedGroup || 'Package / LCC').toLowerCase().trim();
                 const canClaim = user?.role === 'ADMIN' || (user?.groups || []).some(g => g.toLowerCase().trim() === bookingGroup);
+                const isUnassigned = !booking.assignedToUser?.name || booking.assignedToUser.name === 'Unassigned';
                 
                 return (
                     <div className="flex items-center gap-2">
-                        {booking.assignedToUser?.name ? (
+                        {!isUnassigned ? (
                             <div className="flex items-center gap-2">
                                 <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500 border border-slate-200">
-                                    {booking.assignedToUser.name.charAt(0).toUpperCase()}
+                                    {booking.assignedToUser?.name?.charAt(0).toUpperCase()}
                                 </div>
-                                <span className="text-slate-700 font-semibold text-xs tracking-tight">{booking.assignedToUser.name}</span>
+                                <span className="text-slate-700 font-semibold text-xs tracking-tight">{booking.assignedToUser?.name}</span>
                             </div>
                         ) : (
                             <div className="flex flex-col items-start gap-1">
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] text-slate-400 font-medium italic">Unassigned</span>
-                                    <span className={`text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center rounded border shadow-sm ${badge.color}`} title={badge.label}>
+                                    <div className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-md border shadow-sm ${badge.color}`} title={badge.label}>
                                         {badge.code}
-                                    </span>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 font-medium italic">Unassigned</span>
                                 </div>
                                 {canClaim && user?.role === 'AGENT' && (
                                     <button
@@ -494,6 +496,8 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                                 const flightDate = booking.travelers?.[0]?.departureTime;
                                 const tDate = flightDate || booking.travelDate;
                                 const isBooked = booking.status === 'Booked';
+                                const isUnassigned = !booking.assignedToUser?.name || booking.assignedToUser.name === 'Unassigned';
+                                const badge = getGroupBadge(booking.assignedGroup);
 
                                 return (
                                     <div 
@@ -535,9 +539,9 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                                                     }`}>
                                                         {booking.status}
                                                     </span>
-                                                    {!booking.assignedToUser?.name && (
-                                                        <span className={`text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center rounded border shadow-sm ${getGroupBadge(booking.assignedGroup).color}`}>
-                                                            {getGroupBadge(booking.assignedGroup).code}
+                                                    {isUnassigned && (
+                                                        <span className={`text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center rounded border shadow-sm ${badge.color}`}>
+                                                            {badge.code}
                                                         </span>
                                                     )}
                                                 </div>
