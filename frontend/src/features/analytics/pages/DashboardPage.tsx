@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../../context/AuthContext';
 import { Users, FileText, CheckCircle, Clock, Plus, RefreshCw, WifiOff, Trash2 } from 'lucide-react';
 import { NewBookingModal } from '../../../features/bookings/components/NewBookingModal';
@@ -358,7 +359,7 @@ export const Dashboard: React.FC = () => {
                 isOpen={isNewBookingModalOpen}
                 onClose={() => setIsNewBookingModalOpen(false)}
             />
-        </div>
+        </motion.div>
     );
 };
 
