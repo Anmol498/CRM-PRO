@@ -1,6 +1,11 @@
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '../../../components/ui/Button';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import api from '../../../api/client';
+import logo from '../../../assets/logo.png';
 
 export const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -126,7 +131,7 @@ export const Login: React.FC = () => {
                                 />
                                 <button
                                     type="button"
-                                    onClick={() => setShowPassword((prev) => !prev)}
+                                    onClick={() => setShowPassword((prev: boolean) => !prev)}
                                     className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600 transition-colors"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
