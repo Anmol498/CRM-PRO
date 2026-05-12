@@ -21,6 +21,9 @@ const server = http.createServer(app);
 
 // Security Middleware
 app.use(helmet());
+// Trust proxy - Required for express-rate-limit to work correctly on Render/Vercel
+app.set('trust proxy', 1);
+
 app.use(cookieParser());
 app.use(compression());
 app.use(express.json());
@@ -31,11 +34,13 @@ app.use(cors({
   credentials: true,
 }));
 
+// Custom log format for production including response time
+const logFormat = ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" - :response-time ms';
+
 if (env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 } else {
-  // Combined format for production, safer than custom tokens
-  app.use(morgan('combined'));
+  app.use(morgan(logFormat));
 }
 
 // Routes

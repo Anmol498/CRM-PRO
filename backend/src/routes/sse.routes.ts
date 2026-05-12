@@ -11,10 +11,10 @@ const router = Router();
 
 // ── GET /api/stream — SSE connection endpoint ─────────────────────────────────
 router.get('/', async (req: Request, res: Response) => {
-  // ── Auth via query-string token ────────────────────────────────────────────
+  // ── Auth via query-string token or cookie ──────────────────────────────────
   // Browser EventSource API cannot send custom headers.
-  // Token is passed as: /api/stream?token=xxx
-  const token = req.query.token as string;
+  // Token is passed as: /api/stream?token=xxx OR via HTTP-only cookie
+  const token = (req.query.token as string) || req.cookies.token;
 
   if (!token) {
     return res.status(401).json({ message: 'Token required' });
