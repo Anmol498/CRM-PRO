@@ -482,8 +482,6 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                                 const flightDate = booking.travelers?.[0]?.departureTime;
                                 const tDate = flightDate || booking.travelDate;
                                 const isBooked = booking.status === 'Booked';
-                                const isUnassigned = !booking.assignedToUser?.name || booking.assignedToUser.name === 'Unassigned';
-                                const badge = getGroupBadge(booking.assignedGroup);
 
                                 return (
                                     <div 
