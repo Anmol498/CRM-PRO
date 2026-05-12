@@ -289,21 +289,12 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                 const booking = info.row.original;
                 const status = booking.status;
                 const config = statusConfig[status] || statusConfig['New'];
-                const badge = getGroupBadge(booking.assignedGroup);
-                const isUnassigned = !booking.assignedToUser?.name || booking.assignedToUser.name === 'Unassigned';
                 
                 return (
-                    <div className="flex items-center gap-1.5">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight shadow-sm border border-black/5 ${config.bg} ${config.color}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${config.dot} ${status === 'Working' ? 'animate-pulse' : ''}`} />
-                            {status}
-                        </span>
-                        {isUnassigned && (
-                            <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-md border shadow-sm ${badge.color} hover:scale-110 transition-transform cursor-help`} title={`Assigned to ${badge.label} Group`}>
-                                {badge.code}
-                            </span>
-                        )}
-                    </div>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight shadow-sm border border-black/5 ${config.bg} ${config.color}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${config.dot} ${status === 'Working' ? 'animate-pulse' : ''}`} />
+                        {status}
+                    </span>
                 );
             },
         }),
@@ -534,11 +525,6 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                                                     }`}>
                                                         {booking.status}
                                                     </span>
-                                                    {isUnassigned && (
-                                                        <span className={`text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center rounded border shadow-sm ${badge.color}`}>
-                                                            {badge.code}
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </div>
                                         </div>
