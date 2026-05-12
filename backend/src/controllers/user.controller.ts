@@ -245,6 +245,14 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
     const { generateToken } = require('../utils/jwt');
     const newToken = generateToken(user);
 
+    // Set HTTP-only cookie
+    res.cookie('token', newToken, {
+        httpOnly: true,
+        secure: true, // Must be true for sameSite: 'none'
+        sameSite: 'none', // Allow cross-site cookies
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
     res.json({
         id: user._id,
         name: user.name,

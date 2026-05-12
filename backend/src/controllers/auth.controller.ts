@@ -52,8 +52,8 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
             // Set HTTP-only cookie
             res.cookie('token', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax', // Use lax for compatibility with open CORS if needed, or 'strict' if same-domain
+                secure: true, // Must be true for sameSite: 'none'
+                sameSite: 'none', // Allow cross-site cookies
                 maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
             });
 
@@ -89,6 +89,8 @@ export const logoutUser = asyncHandler(async (req: Request, res: Response) => {
 
     res.cookie('token', '', {
         httpOnly: true,
+        secure: true,
+        sameSite: 'none',
         expires: new Date(0),
     });
 
