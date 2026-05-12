@@ -33,6 +33,19 @@ export interface Traveler {
     email?: string;
     dob?: string;
     anniversary?: string;
+    // UI/Legacy compatibility fields
+    flightFrom?: string;
+    flightTo?: string;
+    departureTime?: string;
+    arrivalTime?: string;
+    tripType?: 'one-way' | 'round-trip' | 'multi-city';
+    returnDate?: string;
+    returnDepartureTime?: string;
+    returnArrivalTime?: string;
+    // New optional flight fields
+    airline?: string;
+    flightNumber?: string;
+    pnr?: string;
 }
 
 export interface Comment {
@@ -43,6 +56,8 @@ export interface Comment {
     createdById: string;
     createdAt: string;
 }
+
+
 
 export interface Payment {
     id: string;

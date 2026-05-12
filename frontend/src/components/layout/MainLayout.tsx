@@ -7,8 +7,8 @@ import { useSSE } from '../../hooks/useSSE';
 import { useAuth } from '../../context/AuthContext';
 
 export const MainLayout: React.FC = () => {
-    const { token } = useAuth();
-    const { mode } = useSSE(token);
+    const { } = useAuth();
+    const { mode } = useSSE();
 
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50 relative">

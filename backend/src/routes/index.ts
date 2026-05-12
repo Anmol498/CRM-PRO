@@ -7,6 +7,7 @@ import analyticsRoutes from './analytics.routes';
 import syncRoutes from './sync.routes';
 import externalRoutes from './external.routes';
 import settingsRoutes from './settings.routes';
+import sseRoutes from './sse.routes';
 
 import { apiRateLimiter } from '../middleware/rateLimiter.middleware';
 
@@ -23,5 +24,6 @@ router.use('/analytics', analyticsRoutes);
 router.use('/sync', syncRoutes);
 router.use('/external', externalRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/stream', sseRoutes);
 
 export default router;

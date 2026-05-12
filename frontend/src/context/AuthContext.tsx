@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(data);
             } catch (error) {
                 setUser(null);
-                localStorage.removeItem('token'); // Cleanup legacy token
+                // Cleanup
             } finally {
                 setIsLoading(false);
             }
@@ -84,9 +84,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const login = (userData: any) => {
         setUser(userData);
         // Token is now set in HTTP-only cookie by backend
-        if (userData.token) {
-            localStorage.setItem('token', userData.token); // Still keep for non-cookie fallback if needed
-        }
     };
 
     const logout = async () => {
@@ -96,7 +93,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error('Logout failed:', error);
         } finally {
             setUser(null);
-            localStorage.removeItem('token');
             queryClient.clear();
             window.location.href = '/login';
         }

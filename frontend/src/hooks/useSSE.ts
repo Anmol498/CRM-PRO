@@ -8,7 +8,7 @@ const MAX_FAILURES  = 3;    // fall back to polling after 3 consecutive failures
 const RECONNECT_MAX = 8000; // max jitter delay before reconnect attempt (8s)
 const POLL_INTERVAL = 20000; // fallback poll interval (matches your current 20s)
 
-export function useSSE(token: string | null) {
+export function useSSE() {
   const queryClient   = useQueryClient();
   const esRef         = useRef<EventSource | null>(null);
   const failCount     = useRef(0);
@@ -143,7 +143,6 @@ export function useSSE(token: string | null) {
 
   // ── Connect ───────────────────────────────────────────────────────────────
   const connect = useCallback(() => {
-    if (!token) return;
     if (mode === 'disabled') return;
 
     // Clean up any existing connection
@@ -152,8 +151,8 @@ export function useSSE(token: string | null) {
       esRef.current = null;
     }
 
-    const url = `${API_BASE}/stream?token=${encodeURIComponent(token)}`;
-    const es  = new EventSource(url);
+    const url = `${API_BASE}/stream`;
+    const es  = new EventSource(url, { withCredentials: true });
     esRef.current = es;
 
     es.onopen = () => {
@@ -201,18 +200,18 @@ export function useSSE(token: string | null) {
         reconnectRef.current = setTimeout(connect, jitter);
       }
     };
-  }, [token, handleEvent, startPolling, stopPolling, mode]);
+  }, [handleEvent, startPolling, stopPolling, mode]);
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (token) connect();
+    connect();
 
     return () => {
       if (reconnectRef.current) clearTimeout(reconnectRef.current);
       stopPolling();
       esRef.current?.close();
     };
-  }, [token]); // only reconnect when token changes (login/logout)
+  }, []); // Only connect once on mount
 
   return { mode };
 }

@@ -20,6 +20,41 @@ import {
 import { countryCodes } from '../../../utils/countryCodes';
 import { useAuth } from '../../../context/AuthContext';
 import dayjs from 'dayjs';
+import { getAirportInfo } from '../../../utils/airportLookup';
+
+interface AirportHintProps {
+  code: string | undefined;
+}
+
+/**
+ * Live hint shown below a "Flight From" / "Flight To" input as the user types.
+ */
+function AirportHint({ code }: AirportHintProps) {
+  const trimmed = (code ?? '').trim().toUpperCase();
+
+  // Don't show anything until user has typed at least 3 chars
+  if (trimmed.length < 3) return null;
+
+  const info = getAirportInfo(trimmed);
+
+  if (info) {
+    const label = info.country ? `${info.city}, ${info.country}` : info.city;
+    return (
+      <p className="mt-1 text-[10px] font-semibold text-emerald-600 flex items-center gap-1">
+        <span aria-hidden="true">✓</span>
+        <span>{label}</span>
+      </p>
+    );
+  }
+
+  return (
+    <p className="mt-1 text-[10px] font-semibold text-red-500 flex items-center gap-1">
+      <span aria-hidden="true">✗</span>
+      <span>Unknown airport code</span>
+    </p>
+  );
+}
+
 
 const quotationSuffixes = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
@@ -447,7 +482,7 @@ export const BookingTravelers: React.FC = () => {
             }
 
             // 2. Save Pricing — Build enriched segments and send as primary data
-            const passengerCount = data.travelers.length || 1;
+
             const primaryTraveler = data.travelers[0];
 
             // Build segments array from form state
@@ -803,6 +838,8 @@ export const BookingTravelers: React.FC = () => {
                                                     className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded text-sm focus:ring-2 focus:ring-secondary/20 focus:border-secondary uppercase font-bold shadow-sm"
                                                     placeholder="DXB"
                                                 />
+                                                <AirportHint code={travelersWatch?.[0]?.flightFrom} />
+
                                             </div>
                                             <div>
                                                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1.5">
@@ -813,6 +850,8 @@ export const BookingTravelers: React.FC = () => {
                                                     className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded text-sm focus:ring-2 focus:ring-secondary/20 focus:border-secondary uppercase font-bold shadow-sm"
                                                     placeholder="CDG"
                                                 />
+                                                <AirportHint code={travelersWatch?.[0]?.flightTo} />
+
                                             </div>
                                             <div className="relative group">
                                                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1.5">
@@ -864,6 +903,8 @@ export const BookingTravelers: React.FC = () => {
                                                                 className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded text-sm focus:ring-2 focus:ring-secondary/20 focus:border-secondary uppercase font-bold shadow-sm"
                                                                 placeholder="FROM"
                                                             />
+                                                            <AirportHint code={segment.from} />
+
                                                         </div>
                                                         <div>
                                                             <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1 flex items-center gap-1.5">
@@ -880,6 +921,8 @@ export const BookingTravelers: React.FC = () => {
                                                                 className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded text-sm focus:ring-2 focus:ring-secondary/20 focus:border-secondary uppercase font-bold shadow-sm"
                                                                 placeholder="TO"
                                                             />
+                                                            <AirportHint code={segment.to} />
+
                                                         </div>
                                                         <div className="flex items-center gap-2">
                                                             <div className="flex-1 group">

@@ -3,12 +3,33 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../../api/client';
 import dayjs from 'dayjs';
-import { Plane, Calendar, CreditCard, Plus, ArrowLeft, ArrowLeftRight, User, Phone, Mail, MapPin, MessageSquare, Clock, Edit2, UserPlus, Building2, UserCircle, List, CheckCircle2, ShieldCheck, Check, Layers, Maximize2, X, ChevronDown } from 'lucide-react';
+import { Plane, Calendar, CreditCard, Plus, ArrowLeft, Clock, Edit2, UserPlus, Building2, User, Phone, CheckCircle2, ShieldCheck, Layers, ChevronDown, MoveRight, MessageSquare, Check, Maximize2, X, Mail, UserCircle } from 'lucide-react';
 import { AddPaymentModal } from '../../../features/bookings/components/AddPaymentModal';
 import { EditModal } from '../../../features/bookings/components/EditModal';
 import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
+
+import { getAirportLabel } from '../../../utils/airportLookup';
+
+interface AirportCodeLabelProps {
+    code: string | null | undefined;
+}
+
+/**
+ * Renders "City, Country" below an airport code in the Flight Details card.
+ */
+function AirportCodeLabel({ code }: AirportCodeLabelProps) {
+    if (!code) return null;
+    const label = getAirportLabel(code);
+    if (!label) return null;
+
+    return (
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">
+            {label}
+        </span>
+    );
+}
+
 
 export const BookingDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -524,127 +545,125 @@ export const BookingDetails: React.FC = () => {
                                                 flightFrom: traveler.flightFrom || booking.flightFrom || '',
                                                 flightTo: traveler.flightTo || booking.flightTo || '',
                                             };
-                                            const hasFlightInfo = primary.flightFrom || primary.flightTo;
-                                            const hasTripInfo = primary.tripType || primary.country;
 
-                                            if (!booking.includesFlight && !booking.includesAdditionalServices) return null;
+                                            const showFlight = booking.includesFlight !== false;
+                                            const showAdditional = booking.includesAdditionalServices === true || (booking.additionalServicesDetails && booking.additionalServicesDetails.trim() !== '');
 
-                                            if (!booking.includesFlight && !booking.includesAdditionalServices) return null;
+                                            // Ensure Flight Details are visible if there are segments, even if includesFlight is undefined
+                                            const finalShowFlight = showFlight || (booking.segments && booking.segments.length > 0) || (primary.flightFrom || primary.flightTo);
+
+                                            if (!finalShowFlight && !showAdditional) return null;
 
                                             return (
                                                 <div className="space-y-6">
-                                                    {booking.includesFlight && (
-                                                        <div className="p-4 sm:p-6 rounded-2xl bg-slate-50/50 border border-slate-200/60 shadow-inner">
-                                                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                                                                <Plane size={14} className="text-slate-400" /> Flight Itinerary
-                                                            </h3>
+                                                    {finalShowFlight && (
+                                                        <div className="bg-white border border-slate-200 rounded-xl p-6 mb-4 relative">
+                                                            <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-100">
+                                                                <div className="text-[14px] font-extrabold text-slate-800 flex items-center gap-2 tracking-tight">
+                                                                    <Plane size={16} className="text-blue-600" /> Flight Details
+                                                                </div>
+                                                                <span className="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded border border-blue-100 tracking-wider">
+                                                                    {booking.tripType || 'Flight'}
+                                                                </span>
+                                                            </div>
                                                             
-                                                            <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-                                                                {(booking.segments && booking.segments.length > 0 ? booking.segments : [primary]).map((seg: any, idx: number) => (
-                                                                    <div key={idx} className="relative bg-white p-5 rounded-2xl border border-slate-100 shadow-sm transition-all hover:shadow-md group overflow-hidden">
-                                                                        {/* Leg Indicator */}
-                                                                        <div className="absolute top-0 right-0">
-                                                                            <div className="bg-slate-900 text-white text-[9px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-tighter">
-                                                                                {seg.tripType === 'multi-city' ? `Leg ${idx + 1}` : seg.tripType?.replace('-', ' ') || 'Flight'}
-                                                                            </div>
-                                                                        </div>
+                                                            <div className="flex flex-col gap-8">
+                                                                {(booking.segments && booking.segments.length > 0 ? booking.segments : [primary]).map((seg: any, idx: number) => {
+                                                                    const isRoundTrip = seg.tripType === 'round-trip';
+                                                                    
+                                                                    if (isRoundTrip) {
+                                                                        return (
+                                                                            <div key={idx} className="relative">
+                                                                                <div className="grid grid-cols-[1fr_1.5fr_1fr] items-center gap-4 text-center">
+                                                                                    {/* From */}
+                                                                                    <div className="flex flex-col items-center">
+                                                                                        <h4 className="text-[28px] font-black text-blue-600 tracking-tighter leading-none">{(seg.from || 'TBD').toUpperCase()}</h4>
+                                                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Departure</p>
+                                                                                    </div>
+                                                                                    
+                                                                                    {/* Stacked Paths */}
+                                                                                    <div className="flex flex-col items-center gap-4">
+                                                                                        {/* Outbound */}
+                                                                                        <div className="flex flex-col items-center gap-1.5">
+                                                                                            <div className="text-slate-400 leading-none h-3"><MoveRight size={14} /></div>
+                                                                                            {seg.departureDate && (
+                                                                                                <div className="bg-white border border-slate-100 px-2 py-0.5 rounded-full shadow-sm text-[10px] font-bold text-slate-800">
+                                                                                                    {dayjs(seg.departureDate).format('DD MMM YYYY')}
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
+                                                                                        {/* Return */}
+                                                                                        {(seg.returnDepartureTime || seg.returnDate) && (
+                                                                                            <div className="flex flex-col items-center gap-1.5">
+                                                                                                <div className="text-slate-400 leading-none h-3"><MoveRight size={14} className="rotate-180" /></div>
+                                                                                                <div className="bg-white border border-slate-100 px-2 py-0.5 rounded-full shadow-sm text-[10px] font-bold text-slate-800">
+                                                                                                    {dayjs(seg.returnDepartureTime || seg.returnDate).format('DD MMM YYYY')}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
 
-                                                                        <div className="flex items-center justify-between mb-2 relative pt-2">
-                                                                            {/* Departure */}
-                                                                            <div className="text-left">
-                                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">From</p>
-                                                                                <h4 className="text-2xl font-black text-slate-900 tracking-tighter">{(seg.from || 'TBD').toUpperCase()}</h4>
+                                                                                    {/* To */}
+                                                                                    <div className="flex flex-col items-center">
+                                                                                        <h4 className="text-[28px] font-black text-blue-600 tracking-tighter leading-none">{(seg.to || 'TBD').toUpperCase()}</h4>
+                                                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Destination</p>
+                                                                                    </div>
+                                                                                </div>
                                                                             </div>
+                                                                        );
+                                                                    }
+
+                                                                    // Default Layout for One-Way / Multi-City
+                                                                    return (
+                                                                        <div key={idx} className="relative">
+                                                                            {(seg.tripType === 'multi-city' || (booking.segments && booking.segments.length > 1)) && (
+                                                                                <div className="absolute top-[-8px] left-1/2 -translate-x-1/2 bg-slate-200 text-slate-600 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter z-10">
+                                                                                    Leg {idx + 1}
+                                                                                </div>
+                                                                            )}
                                                                             
-                                                                            {/* SVG Arc Path */}
-                                                                            <div className="flex-1 relative h-16 flex items-center justify-center px-2">
-                                                                                <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible">
-                                                                                    <path 
-                                                                                        d="M 5 30 Q 50 0 95 30" 
-                                                                                        fill="none" 
-                                                                                        stroke="#e2e8f0" 
-                                                                                        strokeWidth="2" 
-                                                                                        strokeLinecap="round"
-                                                                                        strokeDasharray="4 4"
-                                                                                    />
-                                                                                    <motion.path 
-                                                                                        d="M 5 30 Q 50 0 95 30" 
-                                                                                        fill="none" 
-                                                                                        stroke="url(#flightGrad)" 
-                                                                                        strokeWidth="2" 
-                                                                                        strokeLinecap="round"
-                                                                                        initial={{ pathLength: 0 }}
-                                                                                        animate={{ pathLength: 1 }}
-                                                                                        transition={{ duration: 1.5, delay: idx * 0.2 }}
-                                                                                    />
-                                                                                    <defs>
-                                                                                        <linearGradient id="flightGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                                                            <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 1 }} />
-                                                                                            <stop offset="100%" style={{ stopColor: '#8b5cf6', stopOpacity: 1 }} />
-                                                                                        </linearGradient>
-                                                                                    </defs>
-                                                                                    {/* Arrowhead */}
-                                                                                    <motion.path
-                                                                                        d="M 92,27 L 96,31 L 91,34"
-                                                                                        fill="none"
-                                                                                        stroke="#8b5cf6"
-                                                                                        strokeWidth="2"
-                                                                                        strokeLinecap="round"
-                                                                                        initial={{ opacity: 0 }}
-                                                                                        animate={{ opacity: 1 }}
-                                                                                        transition={{ delay: 1.5 + (idx * 0.2) }}
-                                                                                    />
-                                                                                </svg>
-                                                                                
-                                                                                {/* Floating Date Badge */}
-                                                                                <div className="absolute top-1 left-1/2 -translate-x-1/2">
+                                                                            <div className="grid grid-cols-[1fr_1.5fr_1fr] items-center gap-4 text-center">
+                                                                                <div className="flex flex-col items-center">
+                                                                                    <h4 className="text-[28px] font-black text-blue-600 tracking-tighter leading-none">{(seg.from || 'TBD').toUpperCase()}</h4>
+                                                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Departure</p>
+                                                                                    <AirportCodeLabel code={seg.from} />
+                                                                                </div>
+                                                                                <div className="flex flex-col items-center gap-2">
+                                                                                    <div className="text-slate-400"><MoveRight size={16} /></div>
                                                                                     {seg.departureDate && (
-                                                                                        <div className="bg-white border border-slate-100 px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1.5 whitespace-nowrap">
-                                                                                            <Calendar size={10} className="text-blue-500" />
-                                                                                            <span className="text-[10px] font-black text-slate-600">
-                                                                                                {dayjs(seg.departureDate).format('DD MMM')}
-                                                                                            </span>
+                                                                                        <div className="bg-white border border-slate-100 px-2 py-1 rounded-full shadow-sm text-[10px] font-bold text-slate-800">
+                                                                                            {dayjs(seg.departureDate).format('DD MMM YYYY')}
                                                                                         </div>
                                                                                     )}
                                                                                 </div>
-                                                                            </div>
-
-                                                                            {/* Destination */}
-                                                                            <div className="text-right">
-                                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">To</p>
-                                                                                <h4 className="text-2xl font-black text-slate-900 tracking-tighter">{(seg.to || 'TBD').toUpperCase()}</h4>
+                                                                                <div className="flex flex-col items-center">
+                                                                                    <h4 className="text-[28px] font-black text-blue-600 tracking-tighter leading-none">{(seg.to || 'TBD').toUpperCase()}</h4>
+                                                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Destination</p>
+                                                                                    <AirportCodeLabel code={seg.to} />
+                                                                                </div>
                                                                             </div>
                                                                         </div>
+                                                                    );
+                                                                })}
 
-                                                                        {/* Return Leg Info */}
-                                                                        {seg.tripType === 'round-trip' && (seg.returnDepartureTime || seg.returnDate) && (
-                                                                            <div className="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between">
-                                                                                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
-                                                                                    <ArrowLeftRight size={12} className="text-slate-300" />
-                                                                                    <span>RETURN JOURNEY</span>
-                                                                                </div>
-                                                                                <div className="bg-slate-50 text-slate-600 px-2 py-0.5 rounded-md font-black text-[10px] border border-slate-100">
-                                                                                    {dayjs(seg.returnDepartureTime || seg.returnDate).format('DD MMM YYYY')}
-                                                                                </div>
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                ))}
+
                                                             </div>
                                                         </div>
                                                     )}
 
-                                                    {booking.includesAdditionalServices && booking.additionalServicesDetails && (
-                                                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 shadow-sm">
-                                                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
-                                                                <Layers size={14} className="text-slate-400" /> Additional Services
+                                                    {showAdditional && (
+                                                        <div className="bg-white border border-slate-200 rounded-xl p-5">
+                                                            <h3 className="text-[12px] font-extrabold text-slate-700 mb-3 flex items-center gap-2">
+                                                                <Layers size={14} className="text-blue-600/60" /> ADDITIONAL SERVICES
                                                             </h3>
-                                                            <div className="text-sm text-slate-600 whitespace-pre-wrap font-medium pl-6 border-l-2 border-slate-200 ml-1">
+                                                            <div className="text-[12px] text-slate-600 font-medium pl-5 border-l-2 border-blue-100 ml-1 whitespace-pre-wrap leading-relaxed">
                                                                 {booking.additionalServicesDetails}
                                                             </div>
                                                         </div>
                                                     )}
                                                 </div>
+
+
                                             );
 
                                         })()}
