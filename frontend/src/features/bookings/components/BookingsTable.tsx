@@ -320,12 +320,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                 return (
                     <div className="flex items-center gap-2">
                         {!isUnassigned ? (
-                            <div className="flex items-center gap-2">
-                                <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500 border border-slate-200">
-                                    {booking.assignedToUser?.name?.charAt(0).toUpperCase()}
-                                </div>
-                                <span className="text-slate-700 font-semibold text-xs tracking-tight">{booking.assignedToUser?.name}</span>
-                            </div>
+                            <span className="text-slate-700 font-semibold text-xs tracking-tight">{booking.assignedToUser?.name}</span>
                         ) : (
                             <div className="flex flex-col items-start gap-1">
                                 <div className="flex items-center gap-1.5">
