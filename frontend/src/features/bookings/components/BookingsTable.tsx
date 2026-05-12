@@ -16,8 +16,25 @@ import { AssignAgentModal } from './AssignAgentModal';
 import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 
+const statusConfig: Record<string, { color: string, bg: string, dot: string }> = {
+    'Booked': { color: 'text-emerald-600', bg: 'bg-emerald-50', dot: 'bg-emerald-500' },
+    'Working': { color: 'text-purple-600', bg: 'bg-purple-50', dot: 'bg-purple-500' },
+    'Sent': { color: 'text-amber-600', bg: 'bg-amber-50', dot: 'bg-amber-500' },
+    'Follow Up': { color: 'text-[#5d4037]', bg: 'bg-[#efebe9]', dot: 'bg-[#8d6e63]' },
+    'New': { color: 'text-blue-600', bg: 'bg-blue-50', dot: 'bg-blue-500' },
+};
 
+const getGroupBadge = (group?: string) => {
+    const g = (group || 'Package / LCC').toLowerCase().trim();
+    if (g.includes('package')) return { code: 'P', color: 'bg-blue-50 text-blue-600 border-blue-100', label: 'Package' };
+    if (g.includes('visa')) return { code: 'V', color: 'bg-orange-50 text-orange-600 border-orange-100', label: 'Visa' };
+    if (g.includes('ticketing')) return { code: 'T', color: 'bg-purple-50 text-purple-600 border-purple-100', label: 'Ticketing' };
+    if (g.includes('operation')) return { code: 'O', color: 'bg-green-50 text-green-600 border-green-100', label: 'Operations' };
+    if (g.includes('account') || g.includes('acc')) return { code: 'AC', color: 'bg-slate-50 text-slate-600 border-slate-100', label: 'Account' };
+    return { code: '?', color: 'bg-slate-50 text-slate-400 border-slate-100', label: group || 'Unassigned' };
+};
 
 interface BookingsTableProps {
     statusFilter?: string;
@@ -150,16 +167,12 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
             const { data } = await api.get(`/bookings?${params.toString()}`);
             return data;
         },
-        staleTime: 60000,         // Consider data fresh for 60s
-        gcTime: 1000 * 60 * 10,   // Keep in memory for 10 minutes
+        staleTime: 60000,
+        gcTime: 1000 * 60 * 10,
     });
 
     const columnHelper = createColumnHelper<Booking>();
 
-    // 3-click cycle handler for master checkbox:
-    // Click 1: Enter selection mode (show row checkboxes, nothing selected)
-    // Click 2: Select all rows on page
-    // Click 3: Deselect all & exit selection mode
     const handleMasterCheckboxClick = (e: React.MouseEvent<HTMLInputElement>, table: any) => {
         e.stopPropagation();
         
@@ -212,7 +225,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                             onClick={(e) => e.stopPropagation()}
                         />
                     )}
-                    <span>{info.getValue() || '-'}</span>
+                    <span className="font-mono text-xs text-slate-500">{info.getValue() || '-'}</span>
                 </div>
             ),
         }),
@@ -224,7 +237,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                 return (
                     <div className="flex flex-col leading-tight">
                         <span className="whitespace-nowrap">{dayjs(date).format('DD MMM YYYY')}</span>
-                        <span className="text-[10px] text-slate-400 font-normal whitespace-nowrap">{dayjs(date).format('hh:mm A')}</span>
+                        <span className="text-[10px] text-slate-400 font-normal whitespace-nowrap font-mono">{dayjs(date).format('hh:mm A')}</span>
                     </div>
                 );
             },
@@ -243,6 +256,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
         }),
         columnHelper.accessor('contactNumber', {
             header: 'Contact Number',
+            cell: (info) => <span className="font-mono text-xs">{info.getValue() || '-'}</span>,
         }),
         columnHelper.accessor((row) => {
             const flightDestination = row.travelers?.[0]?.flightTo;
@@ -261,25 +275,22 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
             cell: (info) => {
                 const date = info.getValue() as string;
                 if (!date) return '-';
-                return <span className="whitespace-nowrap">{dayjs(date).format('DD MMM YYYY')}</span>;
+                return <span className="whitespace-nowrap font-medium text-slate-700">{dayjs(date).format('DD MMM YYYY')}</span>;
             },
         }),
         columnHelper.accessor('travellers', {
             header: 'Travellers',
-            cell: (info) => info.getValue() || '-',
+            cell: (info) => <span className="font-mono text-xs">{info.getValue() || '-'}</span>,
         }),
         columnHelper.display({
             id: 'status',
             header: 'Status',
             cell: (info) => {
                 const status = info.row.original.status;
+                const config = statusConfig[status] || statusConfig['New'];
                 return (
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status === 'Booked' ? 'bg-green-100 text-green-800' :
-                        status === 'Working' ? 'bg-purple-100 text-purple-800' :
-                            status === 'Sent' ? 'bg-yellow-100 text-yellow-800' :
-                                status === 'Follow Up' ? 'bg-[#efebe9] text-[#5d4037] border border-[#d7ccc8]' :
-                                    'bg-blue-100 text-blue-800'
-                        }`}>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight shadow-sm border border-black/5 ${config.bg} ${config.color}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${config.dot} ${status === 'Working' ? 'animate-pulse' : ''}`} />
                         {status}
                     </span>
                 );
@@ -289,27 +300,32 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
             id: 'assignedTo',
             header: 'Assigned To',
             cell: (info) => {
-                const bookingGroup = (info.row.original.assignedGroup || 'Package / LCC').toLowerCase().trim();
+                const booking = info.row.original;
+                const badge = getGroupBadge(booking.assignedGroup);
+                const bookingGroup = (booking.assignedGroup || 'Package / LCC').toLowerCase().trim();
                 const canClaim = user?.role === 'ADMIN' || (user?.groups || []).some(g => g.toLowerCase().trim() === bookingGroup);
                 
                 return (
-                    <div className="flex items-center">
-                        {info.row.original.assignedToUser?.name ? (
-                            <span className="text-slate-600 font-semibold">{info.row.original.assignedToUser.name}</span>
+                    <div className="flex items-center gap-2">
+                        {booking.assignedToUser?.name ? (
+                            <span className="text-slate-700 font-semibold text-xs">{booking.assignedToUser.name}</span>
                         ) : (
                             <div className="flex flex-col items-start gap-1">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
-                                    {info.row.original.assignedGroup || 'Unassigned'}
-                                </span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] text-slate-400 font-medium italic">Unassigned</span>
+                                    <span className={`text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center rounded border shadow-sm ${badge.color}`} title={badge.label}>
+                                        {badge.code}
+                                    </span>
+                                </div>
                                 {canClaim && user?.role === 'AGENT' && (
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            claimMutation.mutate(info.row.original.id);
+                                            claimMutation.mutate(booking.id);
                                         }}
-                                        className="text-[10px] bg-primary/10 text-primary hover:bg-primary hover:text-white px-2 py-1 rounded font-bold uppercase tracking-tight transition-all"
+                                        className="text-[9px] bg-primary/10 text-primary hover:bg-primary hover:text-white px-2 py-0.5 rounded font-bold uppercase tracking-tight transition-all"
                                     >
-                                        Claim Lead
+                                        Claim
                                     </button>
                                 )}
                             </div>
@@ -358,22 +374,27 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
         <div className="bg-transparent md:bg-white rounded-none md:rounded-lg shadow-none md:shadow-sm border-0 md:border border-slate-200 overflow-hidden">
             <div className="w-full">
                 {isLoading ? (
-                    <div className="p-8 text-center text-slate-500 bg-white rounded-lg shadow-sm border border-slate-200">Loading bookings...</div>
+                    <div className="p-8 text-center text-slate-500 bg-white rounded-lg shadow-sm border border-slate-200">
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                            <span className="text-xs font-medium text-slate-400">Fetching latest leads...</span>
+                        </div>
+                    </div>
                 ) : (
                     <>
                         {Object.keys(rowSelection).length > 0 && (
-                            <div className="bg-primary/10 border-b border-primary/20 px-4 py-3 flex items-center justify-between">
-                                <span className="text-sm font-bold text-primary">
+                            <div className="bg-primary/5 border-b border-primary/10 px-4 py-2 flex items-center justify-between">
+                                <span className="text-[12px] font-bold text-primary">
                                     {Object.keys(rowSelection).length} leads selected
                                 </span>
                                 {user?.role === 'ADMIN' && (
                                     <button 
                                         onClick={() => bulkDeleteMutation.mutate(Object.keys(rowSelection))}
                                         disabled={bulkDeleteMutation.isPending}
-                                        className="p-2 rounded-lg text-red-500 hover:bg-red-100 hover:text-red-700 transition-colors disabled:opacity-50"
+                                        className="p-1.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
                                         title="Delete Selected"
                                     >
-                                        <Trash2 size={18} />
+                                        <Trash2 size={16} />
                                     </button>
                                 )}
                             </div>
@@ -381,68 +402,73 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
 
                         {/* Desktop View Table */}
                         <div className="hidden md:block overflow-x-auto">
-                            <table className="min-w-full divide-y divide-slate-200">
-                        <thead className="bg-slate-50">
-                            {table.getHeaderGroups().map((headerGroup) => (
-                                <tr key={headerGroup.id}>
-                                    {headerGroup.headers.map((header) => (
-                                        <th
-                                            key={header.id}
-                                            scope="col"
-                                            className="px-2 py-2 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50"
-                                        >
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                    header.column.columnDef.header,
-                                                    header.getContext()
-                                                )}
-                                        </th>
+                            <table className="min-w-full divide-y divide-slate-100">
+                                <thead className="bg-slate-50/50">
+                                    {table.getHeaderGroups().map((headerGroup) => (
+                                        <tr key={headerGroup.id}>
+                                            {headerGroup.headers.map((header) => (
+                                                <th
+                                                    key={header.id}
+                                                    scope="col"
+                                                    className="px-3 py-2.5 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                                                >
+                                                    {header.isPlaceholder
+                                                        ? null
+                                                        : flexRender(
+                                                            header.column.columnDef.header,
+                                                            header.getContext()
+                                                        )}
+                                                </th>
+                                            ))}
+                                        </tr>
                                     ))}
-                                </tr>
-                            ))}
-                        </thead>
-                        <tbody className="bg-white divide-y divide-slate-200">
-                            {table.getRowModel().rows.map((row) => (
-                                <tr 
-                                    key={row.id} 
-                                    className={`transition-colors cursor-pointer ${
-                                        row.original.status === 'Follow Up' && row.original.followUpDate && dayjs(row.original.followUpDate).isAfter(dayjs(), 'day')
-                                            ? 'bg-gray-50 opacity-60 hover:opacity-80 hover:bg-gray-100'
-                                            : row.original.outstanding && row.original.outstanding > 0 
-                                                ? 'bg-[#FEF2F2] hover:bg-[#FEE2E2]' 
-                                                : 'bg-white hover:bg-slate-50'
-                                    }`}
-                                    onClick={() => {
-                                        if (window.getSelection()?.toString().length) return;
-                                        sessionStorage.setItem('bookingsReturnUrl', location.pathname + location.search);
-                                        navigate(`/bookings/${row.original.id}`);
-                                    }}
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <td
-                                            key={cell.id}
-                                            className="px-2 py-2 text-sm text-slate-700 font-medium"
-                                            onClick={(e) => {
-                                                // Prevent navigation when clicking on the Actions column
-                                                if (cell.column.id === 'actions') {
-                                                    e.stopPropagation();
-                                                }
-                                            }}
-                                        >
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                            {table.getRowModel().rows.length === 0 && (
-                                <tr>
-                                    <td colSpan={columns.length} className="px-6 py-8 text-center text-slate-500 text-sm">
-                                        No bookings found matching the criteria.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-slate-50">
+                                    <AnimatePresence mode="popLayout">
+                                        {table.getRowModel().rows.map((row, i) => (
+                                            <motion.tr 
+                                                key={row.id} 
+                                                initial={{ opacity: 0, y: 4 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -4 }}
+                                                transition={{ duration: 0.2, delay: Math.min(i, 15) * 0.02, ease: [0.16, 1, 0.3, 1] }}
+                                                className={`transition-colors cursor-pointer group ${
+                                                    row.original.status === 'Follow Up' && row.original.followUpDate && dayjs(row.original.followUpDate).isAfter(dayjs(), 'day')
+                                                        ? 'bg-gray-50/50 opacity-70 hover:opacity-100 hover:bg-gray-100/50'
+                                                        : row.original.outstanding && row.original.outstanding > 0 
+                                                            ? 'bg-rose-50/30 hover:bg-rose-50/60' 
+                                                            : 'bg-white hover:bg-slate-50/80'
+                                                }`}
+                                                onClick={() => {
+                                                    if (window.getSelection()?.toString().length) return;
+                                                    sessionStorage.setItem('bookingsReturnUrl', location.pathname + location.search);
+                                                    navigate(`/bookings/${row.original.id}`);
+                                                }}
+                                            >
+                                                {row.getVisibleCells().map((cell) => (
+                                                    <td
+                                                        key={cell.id}
+                                                        className="px-3 py-2 text-[13px] text-slate-600 font-medium"
+                                                        onClick={(e) => {
+                                                            if (cell.column.id === 'actions') {
+                                                                e.stopPropagation();
+                                                            }
+                                                        }}
+                                                    >
+                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                    </td>
+                                                ))}
+                                            </motion.tr>
+                                        ))}
+                                    </AnimatePresence>
+                                    {table.getRowModel().rows.length === 0 && (
+                                        <tr>
+                                            <td colSpan={columns.length} className="px-6 py-12 text-center">
+                                                <p className="text-sm font-medium text-slate-400">No leads found matching your criteria.</p>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
                             </table>
                         </div>
 
@@ -516,15 +542,29 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                                         </div>
                                         <div className="flex items-center justify-between pt-1">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
-                                                    {(booking.assignedToUser?.name || 'U').charAt(0).toUpperCase()}
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">Assignee</span>
-                                                    <span className="text-xs font-bold text-slate-700 leading-tight">
-                                                        {booking.assignedToUser?.name?.split(' ')[0] || 'Unassigned'}
-                                                    </span>
-                                                </div>
+                                                {booking.assignedToUser?.name ? (
+                                                    <>
+                                                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
+                                                            {(booking.assignedToUser?.name || 'U').charAt(0).toUpperCase()}
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">Assignee</span>
+                                                            <span className="text-xs font-bold text-slate-700 leading-tight">
+                                                                {booking.assignedToUser?.name?.split(' ')[0]}
+                                                            </span>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-black text-[10px] border shadow-sm ${getGroupBadge(booking.assignedGroup).color}`}>
+                                                            {getGroupBadge(booking.assignedGroup).code}
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">Status</span>
+                                                            <span className="text-xs font-bold text-slate-400 italic leading-tight">Unassigned</span>
+                                                        </div>
+                                                    </>
+                                                )}
                                             </div>
                                             <div onClick={(e) => e.stopPropagation()}>
                                                 <ActionDropdown

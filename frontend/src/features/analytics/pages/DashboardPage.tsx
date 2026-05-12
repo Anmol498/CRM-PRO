@@ -36,6 +36,9 @@ const Loader: React.FC<{ fullPage?: boolean }> = ({ fullPage = false }) => {
     );
 };
 
+import { Button } from '../../../components/ui/Button';
+import { Counter } from '../../../components/ui/Counter';
+
 export const Dashboard: React.FC = () => {
     const { user } = useAuth();
     const [isNewBookingModalOpen, setIsNewBookingModalOpen] = useState(false);
@@ -59,8 +62,6 @@ export const Dashboard: React.FC = () => {
 
     const deleteAllNotificationsMutation = useMutation({
         mutationFn: async () => {
-            // Delete all notifications one by one (or we can add a backend route)
-            // For now, use the dismiss-all then the sync will show empty
             const ids = notifications?.map((n: any) => n.id || n._id) || [];
             await Promise.all(ids.map((id: string) => api.delete(`/notifications/${id}`)));
         },
@@ -74,7 +75,6 @@ export const Dashboard: React.FC = () => {
         }
     });
 
-    // Single combined call for stats + recent bookings + notifications
     const { data: syncData, isLoading: isStatsLoading, isError, error, refetch } = useGlobalSync();
 
     const stats = syncData?.stats;
@@ -82,13 +82,13 @@ export const Dashboard: React.FC = () => {
     const notifications = syncData?.notifications;
 
     const cards = [
-        { title: 'Total Bookings', value: stats?.total || 0, icon: <FileText className="text-blue-600" size={22} />, bg: 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200' },
-        { title: 'Confirmed (EDT)', value: stats?.booked || 0, icon: <CheckCircle className="text-emerald-600" size={22} />, bg: 'bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200' },
-        { title: 'New Enquiries', value: stats?.pending || 0, icon: <Clock className="text-amber-600" size={22} />, bg: 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200' },
+        { title: 'Total Bookings', value: stats?.total || 0, icon: <FileText className="text-blue-600" size={20} />, color: 'blue' },
+        { title: 'Confirmed (EDT)', value: stats?.booked || 0, icon: <CheckCircle className="text-emerald-600" size={20} />, color: 'emerald' },
+        { title: 'New Enquiries', value: stats?.pending || 0, icon: <Clock className="text-amber-600" size={20} />, color: 'amber' },
     ];
 
     if (user?.role === 'ADMIN') {
-        cards.push({ title: 'Active Agents', value: stats?.agents || 0, icon: <Users className="text-secondary" size={22} />, bg: 'bg-gradient-to-br from-secondary/5 to-secondary/10 border-secondary/20' });
+        cards.push({ title: 'Active Agents', value: stats?.agents || 0, icon: <Users className="text-purple-600" size={20} />, color: 'purple' });
     }
 
     if (isStatsLoading) {
@@ -108,13 +108,14 @@ export const Dashboard: React.FC = () => {
                             Unable to reach the server. It may be restarting — this usually takes 15-30 seconds.
                         </p>
                     </div>
-                    <button
+                    <Button
                         onClick={() => refetch()}
-                        className="flex items-center gap-2 mx-auto px-5 py-2.5 bg-primary text-white text-sm font-bold rounded-lg hover:opacity-90 transition-all shadow-sm"
+                        variant="primary"
+                        leftIcon={<RefreshCw size={14} />}
+                        className="mx-auto"
                     >
-                        <RefreshCw size={14} />
                         Retry
-                    </button>
+                    </Button>
                     {error && (
                         <p className="text-[10px] text-slate-400 font-mono">{(error as Error).message}</p>
                     )}
@@ -124,35 +125,53 @@ export const Dashboard: React.FC = () => {
     }
 
     return (
-        <div className="space-y-8 max-w-7xl mx-auto">
+        <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-8 max-w-7xl mx-auto"
+        >
             <div className="px-2 border-b border-slate-200 pb-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight whitespace-nowrap">Overview</h1>
                     <p className="text-slate-500 text-sm mt-2">Welcome, <span className="font-semibold text-slate-700">{user?.name}</span>. Here's a summary of your Bookings.</p>
                 </div>
-                <button
+                <Button
                     onClick={() => setIsNewBookingModalOpen(true)}
-                    className="flex items-center space-x-2 bg-brand-gradient hover:opacity-90 text-white px-4 py-2 rounded-md shadow-md transition-all font-bold mt-1 md:mt-0 transform hover:scale-[1.02] active:scale-[0.98] w-full md:w-auto justify-center md:justify-start"
+                    variant="primary"
+                    leftIcon={<Plus size={18} />}
+                    className="w-full md:w-auto"
                 >
-                    <Plus size={18} />
-                    <span>New Booking</span>
-                </button>
+                    New Booking
+                </Button>
             </div>
 
             {/* Metric Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 px-2">
                 {cards.map((card, idx) => (
-                    <div key={idx} className={`rounded-xl shadow-sm border p-4 md:p-6 flex flex-col justify-between hover:shadow-md transition-all duration-200 ${card.bg}`}>
-                        <div className="flex justify-between items-start mb-2">
-                            <div className="p-2 md:p-2.5 rounded-lg bg-white shadow-sm border border-white/50">
+                    <motion.div 
+                        key={idx} 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: idx * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                        whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                        className={`group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-5 md:p-6 shadow-sm transition-all hover:shadow-xl hover:border-slate-300`}
+                    >
+                        <div className={`absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full blur-3xl opacity-[0.03] transition-opacity group-hover:opacity-[0.06] bg-${card.color}-500`} />
+                        
+                        <div className="flex justify-between items-start mb-4">
+                            <div className={`p-2.5 rounded-xl bg-${card.color}-50/80 border border-${card.color}-100/50 shadow-inner`}>
                                 {card.icon}
                             </div>
                         </div>
+                        
                         <div>
-                            <p className="text-2xl md:text-3xl font-bold text-slate-900 mt-2">{card.value}</p>
-                            <h3 className="text-slate-600 text-xs md:text-sm font-medium mt-1">{card.title}</h3>
+                            <p className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
+                                <Counter value={card.value} />
+                            </p>
+                            <h3 className="text-slate-500 text-xs md:text-sm font-semibold mt-1 uppercase tracking-wider">{card.title}</h3>
                         </div>
-                    </div>
+                    </motion.div>
                 ))}
             </div>
 

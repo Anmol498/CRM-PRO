@@ -6,6 +6,8 @@ import { BottomNav } from './BottomNav';
 import { useSSE } from '../../hooks/useSSE';
 import { useAuth } from '../../context/AuthContext';
 
+import { PageTransition } from './PageTransition';
+
 export const MainLayout: React.FC = () => {
     const { } = useAuth();
     const { mode } = useSSE();
@@ -20,9 +22,12 @@ export const MainLayout: React.FC = () => {
             <div className="flex-1 flex flex-col min-w-0 relative">
                 <Topbar />
                 <main className="flex-1 p-4 md:p-6 overflow-y-auto w-full pb-24 md:pb-6">
-                    <Outlet />
+                    <PageTransition>
+                        <Outlet />
+                    </PageTransition>
                 </main>
             </div>
+
 
             {/* Mobile Bottom Navigation */}
             <BottomNav />

@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
 
 @theme {
   --color-background: hsl(var(--background));
@@ -38,6 +41,24 @@
   --color-chart-3: hsl(var(--chart-3));
   --color-chart-4: hsl(var(--chart-4));
   --color-chart-5: hsl(var(--chart-5));
+
+  /* ── Typography ── */
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui;
+  --font-mono: "Geist Mono Variable", ui-monospace;
+
+  /* ── Brand Gradient ── */
+  --gradient-brand: linear-gradient(135deg, #a33126 0%, #4c86d1 100%);
+  --gradient-brand-subtle: linear-gradient(135deg, rgba(163, 49, 38, 0.08) 0%, rgba(76, 134, 209, 0.08) 100%);
+
+  /* ── Motion ── */
+  --duration-instant: 80ms;
+  --duration-fast: 150ms;
+  --duration-normal: 220ms;
+  --duration-slow: 350ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-inout: cubic-bezier(0.4, 0, 0.2, 1);
+
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -113,7 +134,42 @@
   *, ::after, ::before, ::backdrop, ::file-selector-button {
     border-color: var(--color-border, currentColor);
   }
+
+  html {
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Tabular numbers everywhere data lives */
+  .font-tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 99px;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
 }
+
 
 @utility bg-brand-gradient {
   background: linear-gradient(135deg, #f87171, #ef4444 35%, #38bdf8);
