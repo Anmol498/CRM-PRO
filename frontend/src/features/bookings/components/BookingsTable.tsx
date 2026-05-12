@@ -286,13 +286,23 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
             id: 'status',
             header: 'Status',
             cell: (info) => {
-                const status = info.row.original.status;
+                const booking = info.row.original;
+                const status = booking.status;
                 const config = statusConfig[status] || statusConfig['New'];
+                const badge = getGroupBadge(booking.assignedGroup);
+                
                 return (
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight shadow-sm border border-black/5 ${config.bg} ${config.color}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${config.dot} ${status === 'Working' ? 'animate-pulse' : ''}`} />
-                        {status}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight shadow-sm border border-black/5 ${config.bg} ${config.color}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${config.dot} ${status === 'Working' ? 'animate-pulse' : ''}`} />
+                            {status}
+                        </span>
+                        {!booking.assignedToUser?.name && (
+                            <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-md border shadow-sm ${badge.color} hover:scale-110 transition-transform cursor-help`} title={`Assigned to ${badge.label} Group`}>
+                                {badge.code}
+                            </span>
+                        )}
+                    </div>
                 );
             },
         }),
@@ -308,7 +318,12 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                 return (
                     <div className="flex items-center gap-2">
                         {booking.assignedToUser?.name ? (
-                            <span className="text-slate-700 font-semibold text-xs">{booking.assignedToUser.name}</span>
+                            <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500 border border-slate-200">
+                                    {booking.assignedToUser.name.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="text-slate-700 font-semibold text-xs tracking-tight">{booking.assignedToUser.name}</span>
+                            </div>
                         ) : (
                             <div className="flex flex-col items-start gap-1">
                                 <div className="flex items-center gap-1.5">
@@ -323,7 +338,7 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                                             e.stopPropagation();
                                             claimMutation.mutate(booking.id);
                                         }}
-                                        className="text-[9px] bg-primary/10 text-primary hover:bg-primary hover:text-white px-2 py-0.5 rounded font-bold uppercase tracking-tight transition-all"
+                                        className="text-[9px] bg-primary/10 text-primary hover:bg-primary hover:text-white px-2 py-0.5 rounded font-black uppercase tracking-tighter transition-all shadow-sm border border-primary/20"
                                     >
                                         Claim
                                     </button>
@@ -509,16 +524,23 @@ export const BookingsTable: React.FC<BookingsTableProps> = ({ statusFilter, agen
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-[10px] font-bold text-slate-400 tracking-wider">#{booking.uniqueCode || '-'}</span>
-                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                                    isBooked ? 'bg-green-50 text-green-700 border border-green-200' :
-                                                    booking.status === 'Working' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
-                                                    booking.status === 'Sent' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
-                                                    booking.status === 'Follow Up' ? 'bg-[#efebe9] text-[#5d4037] border border-[#d7ccc8]' :
-                                                    'bg-blue-50 text-blue-700 border border-blue-200'
-                                                }`}>
-                                                    {booking.status}
-                                                </span>
+                                                <span className="text-[10px] font-bold text-slate-400 tracking-wider font-mono">#{booking.uniqueCode || '-'}</span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                                        isBooked ? 'bg-green-50 text-green-700 border border-green-200' :
+                                                        booking.status === 'Working' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
+                                                        booking.status === 'Sent' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                                                        booking.status === 'Follow Up' ? 'bg-[#efebe9] text-[#5d4037] border border-[#d7ccc8]' :
+                                                        'bg-blue-50 text-blue-700 border border-blue-200'
+                                                    }`}>
+                                                        {booking.status}
+                                                    </span>
+                                                    {!booking.assignedToUser?.name && (
+                                                        <span className={`text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center rounded border shadow-sm ${getGroupBadge(booking.assignedGroup).color}`}>
+                                                            {getGroupBadge(booking.assignedGroup).code}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-3 py-3 border-y border-slate-50">
